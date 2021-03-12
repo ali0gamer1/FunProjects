@@ -106,17 +106,24 @@ void do_it()
             else
             if (isop(line[i]))
                 {
+
                     while (sp > 0 && (opsPrecedence[opstack[sp-1]].pre > opsPrecedence[line[i]].pre  || (opsPrecedence[opstack[sp-1]].pre == opsPrecedence[line[i]].pre && opsPrecedence[line[i]].as==0 ) ) && opstack[sp-1] != '(' )
                     {
                         output[outsp] = opstack[(sp-1)];
                         outsp++;
                         output[outsp] = ' ';
                         outsp++;
-                        opstack++;
+
+
                         sp--;
                     }
 
+
                     opstack[sp++] = line[i];
+                    puts("\n----\n");
+                 putchar(opstack[(sp-1)]);
+                 puts("\n----\n");
+
                     i++;
                 }
                 else
@@ -138,7 +145,7 @@ void do_it()
                         if (sp<=0)
                         {
                             fprintf(stderr,"Error mismatched paranthesis");
-                            return 1;
+                            return ;
                         }
                     }
 
@@ -152,7 +159,7 @@ void do_it()
 
         }
 
-        if (sp>0)
+        while (sp>0)
         {
             output[outsp] = opstack[sp-1];
             outsp++;
@@ -180,7 +187,6 @@ void do_it()
     }
 
 }
-
 
 int main()
 {
