@@ -1,11 +1,66 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
+#include <string.h>
+#include <math.h>
+
+void die(const char *msg)
+{
+	fprintf(stderr, "%s", msg);
+	abort();
+}
+
+#define MAX_D 256
+double stack[MAX_D];
+int depth;
+
+void push(double v)
+{
+	if (depth >= MAX_D) die("stack overflow\n");
+	stack[depth++] = v;
+}
+
+double pop()
+{
+	if (!depth) die("stack underflow\n");
+	return stack[--depth];
+}
+
+double rpn(char *s)
+{
+	double a, b;
+	int i;
+	char *e, *w = " \t\n\r\f";
+
+	for (s = strtok(s, w); s; s = strtok(0, w)) {
+		a = strtod(s, &e);
+		if (e > s)		printf(" :"), push(a);
+#define binop(x) printf("%c:", *s), b = pop(), a = pop(), push(x)
+		else if (*s == '+')	binop(a + b);
+		else if (*s == '-')	binop(a - b);
+		else if (*s == '*')	binop(a * b);
+		else if (*s == '/')	binop(a / b);
+		else if (*s == '^')	binop(pow(a, b));
+#undef binop
+		else {
+			fprintf(stderr, "'%c': ", *s);
+			die("unknown oeprator\n");
+		}
+		for (i = depth; i-- || 0 * putchar('\n'); )
+			printf(" %g", stack[i]);
+	}
+
+	if (depth != 1) die("stack leftover\n");
+
+	return pop();
+}
+
 
 #define MAX_OP_STACK_SIZE 500
 #define MAX_OUTPUT_SIZE 500
-#define MAX_LINE_SIZE MAX_OUTPUT_SIZE+MAX_OP_STACK_SIZE
-#define NOPS 4
+#define MAX_LINE_SIZE (MAX_OUTPUT_SIZE+MAX_OP_STACK_SIZE)
+#define OPERATOR_MAX_LEN 10
+#define MAX_OUTPUT_LENGTH 100
+
 
 typedef struct operators
 {
@@ -13,40 +68,117 @@ typedef struct operators
 };
 
 
-struct operators opsPrecedence[255];
+struct operators _opsPrecedence[20];
 void initOpsStruct()
 {
-     // Associativity
-     opsPrecedence['|'].as=0;
-     opsPrecedence['^'].as=0;
-     opsPrecedence['&'].as=0;
-     opsPrecedence['<' + '<'].as=0;
-     opsPrecedence['>' + '>'].as=0;
-     opsPrecedence['+'].as=0;
-     opsPrecedence['-'].as=0;
-     opsPrecedence['*'].as=0;
-     opsPrecedence['/'].as=0;
-     opsPrecedence['%'].as=0;
-     opsPrecedence['~'].as=0;
+    _opsPrecedence[0].pre=0; // |
+    _opsPrecedence[1].pre=1; // ^
+    _opsPrecedence[2].pre=2; // &
+    _opsPrecedence[3].pre=3; // <<
+    _opsPrecedence[4].pre=3; // >>
+    _opsPrecedence[5].pre=4; // +
+    _opsPrecedence[6].pre=4; // -
+    _opsPrecedence[7].pre=5; // *
+    _opsPrecedence[8].pre=5; // /
+    _opsPrecedence[9].pre=5; // %
+    _opsPrecedence[10].pre=6; // ~
+    _opsPrecedence[11].pre=6; // unary minus (-u)
+    _opsPrecedence[12].pre=6; // unary minus (+u)
+
+    // Associativity (IDs are the same as presedence)
+    _opsPrecedence[0].as=0;
+    _opsPrecedence[1].as=0;
+    _opsPrecedence[2].as=0;
+    _opsPrecedence[3].as=0;
+    _opsPrecedence[4].as=0;
+    _opsPrecedence[5].as=0;
+    _opsPrecedence[6].as=0;
+    _opsPrecedence[7].as=0;
+    _opsPrecedence[8].as=0;
+    _opsPrecedence[9].as=0;
+    _opsPrecedence[10].as=0;
+    _opsPrecedence[11].as=1;
+    _opsPrecedence[12].as=1;
+}
+
+struct operators opsPrecedence(const char * operator)
+{
+    if (!strcmp(operator,"+u"))
+    {
+        return _opsPrecedence[12];
+
+    } else
+    if (!strcmp(operator,"-u"))
+    {
+        return _opsPrecedence[11];
+
+    } else
+    if (!strcmp(operator,"~"))
+    {
+        return _opsPrecedence[10];
+
+    } else
+    if (!strcmp(operator,"%"))
+    {
+        return _opsPrecedence[9];
+
+    } else
+    if (!strcmp(operator,"/"))
+    {
+        return _opsPrecedence[8];
+
+    } else
+    if (!strcmp(operator,"*"))
+    {
+        return _opsPrecedence[7];
+
+    } else
+    if (!strcmp(operator,"-"))
+    {
+        return _opsPrecedence[6];
+
+    } else
+    if (!strcmp(operator,"+"))
+    {
+        return _opsPrecedence[5];
+
+    } else
+    if (!strcmp(operator,">>"))
+    {
+        return _opsPrecedence[4];
+
+    } else
+    if (!strcmp(operator,"<<"))
+    {
+        return _opsPrecedence[3];
+
+    } else
+    if (!strcmp(operator,"&"))
+    {
+        return _opsPrecedence[2];
+
+    } else
+    if (!strcmp(operator,"^"))
+    {
+        return _opsPrecedence[1];
+
+    } else
+    if (!strcmp(operator,"|"))
+    {
+        return _opsPrecedence[0];
+
+    }
 
 
-     opsPrecedence['|'].pre=0;
-     opsPrecedence['^'].pre=1;
-     opsPrecedence['&'].pre=2;
-     opsPrecedence['<' + '<'].pre=3;
-     opsPrecedence['>' + '>'].pre=3;
-     opsPrecedence['+'].pre=4;
-     opsPrecedence['-'].pre=4;
-     opsPrecedence['*'].pre=5;
-     opsPrecedence['/'].pre=5;
-     opsPrecedence['%'].pre=5;
-     opsPrecedence['~'].pre=6;
 }
 
 
 
-char *opstack;
+
+char *tempop;
+char **opstack;
 unsigned int sp;
+
 
 char *output;
 unsigned int outsp;
@@ -65,22 +197,22 @@ int get_line(char line[])
 
         }
     }
+    line[i]='\0';
 
     return i;
 }
 
 
-char isop(int var)
+char isop(const char *var)
 {
-
-    return (var=='+' || var=='/' || var=='-' || var=='*');
+    return (!strcmp(var,"+") || !strcmp(var,"/") || !strcmp(var,"-") || !strcmp(var,"*") || !strcmp(var,"^"));
 }
 
 
 
 void do_it()
 {
-    int len, i, j;
+    int len, i, j = 0;
     double val = 0.0,power = 1.0;
     char line[MAX_LINE_SIZE];
 
@@ -88,58 +220,113 @@ void do_it()
     {
         for(i = 0;i<len && line[i] != '\0';)
         {
+            j=0;
 
 
-            puts("debugs");
+
+
             if (isdigit(line[i]))
             {
+
+
                 while (isdigit(line[i]))
                 {
                     output[outsp] = line[i];
                     outsp++;
 
+
                     i++;
                 }
                 output[outsp] = ' ';
                 outsp++;
+
+                j = 0;
+
             }
             else
-            if (isop(line[i]))
+            if (line[i]!='(' && line[i]!=')')
                 {
 
-                    while (sp > 0 && (opsPrecedence[opstack[sp-1]].pre > opsPrecedence[line[i]].pre  || (opsPrecedence[opstack[sp-1]].pre == opsPrecedence[line[i]].pre && opsPrecedence[line[i]].as==0 ) ) && opstack[sp-1] != '(' )
+
+                    while ( !isdigit(line[i]) && line[i]!='\0' && line[i]!='(' && line[i]!=')') //TODO: SAVED MESSAGES TELEGRAM and J limit
                     {
-                        output[outsp] = opstack[(sp-1)];
-                        outsp++;
-                        output[outsp] = ' ';
-                        outsp++;
+                        tempop[j] = line[i];
+                        i++;
+                        j++;
+
+                    }
+                    tempop[j] = '\0';j = 0;
 
 
-                        sp--;
+
+
+                    if (isop(tempop))
+                    {
+                        puts("\n--");
+                        puts(tempop);
+                        puts("\n--");
+
+
+
+                        while (sp > 0 && (opsPrecedence(opstack[sp-1]).pre > opsPrecedence(tempop).pre || (opsPrecedence(opstack[sp-1]).pre == opsPrecedence(tempop).pre && opsPrecedence(tempop).as == 0 )) && opstack[sp-1] != '(' )
+                        {
+                            for (int _i = 0;opstack[sp-1][_i]!='\0';_i++)
+                            {
+                                output[outsp] = opstack[sp-1][_i];
+                                outsp++;
+                            }
+                            output[outsp] = ' ';
+                            outsp++;
+
+
+
+                            sp--;
+
+                        }
+
+
+                    strcpy(opstack[sp],tempop);
+
+                    sp++;
+
+                    }
+                    else{
+
+
+                        continue;
                     }
 
 
-                    opstack[sp++] = line[i];
-                    puts("\n----\n");
-                 putchar(opstack[(sp-1)]);
-                 puts("\n----\n");
 
-                    i++;
+
+                    j = 0;
                 }
                 else
                 if (line[i] == '(')
                 {
-                   opstack[sp] = line[i];
+                   opstack[sp][j] = line[i];
+                   j++;
+                   opstack[sp][j] = '\0';
                    sp++;
                    i++;
+                   j=0;
                 }
                 else
                 if (line[i] == ')')
                 {
-                    while (opstack[sp-1] != '(')
+                    while (opstack[sp-1][0] != '(')
                     {
-                        output[outsp++] = opstack[sp-1];
-                        output[outsp++] = ' ';
+                        for (int _i = 0;opstack[sp-1][_i]!='\0';_i++)
+                        {
+                            output[outsp] = opstack[sp-1][_i];
+                            outsp++;
+                        }
+                        output[outsp] = ' ';
+                        outsp++;
+
+
+
+
                         sp--;
 
                         if (sp<=0)
@@ -149,10 +336,11 @@ void do_it()
                         }
                     }
 
-                    if (opstack[sp-1] == '(')
+                    if (opstack[sp-1][0] == '(')
                     {
                         sp--;
                     }
+
                     i++;
                 }
 
@@ -161,40 +349,58 @@ void do_it()
 
         while (sp>0)
         {
-            output[outsp] = opstack[sp-1];
+
+            for (int _i = 0;opstack[sp-1][_i]!='\0';_i++)
+            {
+                output[outsp] = opstack[sp-1][_i];
+                outsp++;
+            }
+            output[outsp] = ' ';
             outsp++;
-            output[outsp++] = ' ';
             sp--;
         }
+        puts("\n--");
+        output[outsp]='\0';
+        puts(output);
+        puts("\n--");
 
-
-        for (int _i = 0;_i<outsp;_i++)
-        {
-
-            printf("%c",output[_i]);
-        }
-
-        //clear output stack
-
-        for (int _i = 0 ; _i<=outsp;_i++)
-        {
-            output[_i] = 0;
-        }
-
-
-        outsp=0;
+        return;
 
     }
 
 }
 
-int main()
+void initStacks()
 {
-    opstack = (char *) malloc(MAX_OP_STACK_SIZE);
-    output = (char *) malloc(MAX_OUTPUT_SIZE);
+        opstack = (char **) malloc(MAX_OP_STACK_SIZE);
+        output = (char *) malloc(MAX_OUTPUT_SIZE);
+        tempop = (char *) malloc(OPERATOR_MAX_LEN);
+
+        for (int _i = 0;_i<=MAX_OP_STACK_SIZE;_i++)
+        {
+            opstack[_i] = (char *) malloc(OPERATOR_MAX_LEN);
+        }
+
+
+
+}
+
+
+int main(void)
+{
+    initStacks();
     initOpsStruct();
 
-    do_it();
 
-    return 0;
+
+
+    while(1){
+        do_it();
+
+
+        printf("%s\n", rpn(output));
+
+        outsp=0;
+
+    }
 }
