@@ -117,6 +117,7 @@ int get_line(char line[])
 
         }
     }
+    line[i]='\0';
 
     return i;
 }
@@ -219,21 +220,6 @@ void do_it()
         }
 
         return ;
-        for (int _i = 0;_i<outsp;_i++)
-        {
-
-            printf("%c",output[_i]);
-        }
-
-        //clear output stack
-
-        for (int _i = 0 ; _i<=outsp;_i++)
-        {
-            output[_i] = 0;
-        }
-
-
-        outsp=0;
 
     }
 
@@ -246,7 +232,16 @@ int main(void)
     output = (char *) malloc(MAX_OUTPUT_SIZE);
     initOpsStruct();
 
-    do_it();
+    while(1){
 
-	printf("%s\n", rpn(output));
+        do_it();
+        printf("%s\n", rpn(output));
+        for (int _i = 0 ; _i<=outsp;_i++)
+        {
+            output[_i] = 0;
+        }
+
+        outsp=0;
+
+    }
 }
