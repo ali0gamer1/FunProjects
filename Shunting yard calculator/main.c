@@ -159,22 +159,33 @@ unsigned int outsp;
 
 
 
-double rpn(char **s)
+double rpn()
 {
 	double a;
 	int i, j;
-	char flag = 1;
+	char flag;
+    for ( int _i = 0;output[_i][0]!='\0';_i++)
+    {
+            printf("%s ", output[_i]);
+
+
+    }
+        puts("\ndasad");
 
 
 	for ( i = 0;output[i][0]!='\0';i++)
     {
+        flag=0;
 
         for ( j = 0;output[i][j]!='\0';j++)
         {
             if (output[i][j] != '.' &&!isdigit(output[i][j]))
             {
-                flag = 0;
+                break;
             }
+            else
+                flag=1;
+
         }
 
         if (flag) //(a=atof(output[i]))
@@ -184,9 +195,11 @@ double rpn(char **s)
         }
         else if(isop(output[i]))
         {
+
             if (!strcmp("-u",output[i]))
             {
-                push(pop()*(-1));
+                a=pop();
+                push(a*(-1));
             }
             else
             if (!strcmp("+u",output[i]))
@@ -196,6 +209,7 @@ double rpn(char **s)
             else
             if (!strcmp("+",output[i]))
             {
+                printf("\np%sp\n",output[i]);
                 push(pop()+pop());
             }
             else
@@ -441,8 +455,11 @@ int main(void)
     while(1){
         do_it();
 
+        int _i = 0;
 
-        printf("%g", rpn(output));
+
+
+        printf("%g", rpn());
         /*
         int _i = 0;
 
