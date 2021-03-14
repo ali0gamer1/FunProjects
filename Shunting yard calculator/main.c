@@ -12,6 +12,7 @@ void die(const char *msg)
 #define MAX_D 256
 double stack[MAX_D];
 int depth;
+char isop(const char *var);
 
 void push(double v)
 {
@@ -25,34 +26,7 @@ double pop()
 	return stack[--depth];
 }
 
-double rpn(char *s)
-{
-	double a, b;
-	int i;
-	char *e, *w = " \t\n\r\f";
 
-	for (s = strtok(s, w); s; s = strtok(0, w)) {
-		a = strtod(s, &e);
-		if (e > s)		printf(" :"), push(a);
-#define binop(x) printf("%c:", *s), b = pop(), a = pop(), push(x)
-		else if (*s == '+')	binop(a + b);
-		else if (*s == '-')	binop(a - b);
-		else if (*s == '*')	binop(a * b);
-		else if (*s == '/')	binop(a / b);
-		else if (*s == '^')	binop(pow(a, b));
-#undef binop
-		else {
-			fprintf(stderr, "'%c': ", *s);
-			die("unknown oeprator\n");
-		}
-		for (i = depth; i-- || 0 * putchar('\n'); )
-			printf(" %g", stack[i]);
-	}
-
-	if (depth != 1) die("stack leftover\n");
-
-	return pop();
-}
 
 
 #define MAX_OP_STACK_SIZE 500
@@ -180,8 +154,83 @@ char **opstack;
 unsigned int sp;
 
 
-char *output;
+char **output;
 unsigned int outsp;
+
+
+
+double rpn(char **s)
+{
+	double a;
+	int i, j;
+	char flag = 1;
+
+
+	for ( i = 0;output[i][0]!='\0';i++)
+    {
+
+        for ( j = 0;output[i][j]!='\0';j++)
+        {
+            if (output[i][j] != '.' &&!isdigit(output[i][j]))
+            {
+                flag = 0;
+            }
+        }
+
+        if (flag) //(a=atof(output[i]))
+        {
+            push(atof(output[i]));
+
+        }
+        else if(isop(output[i]))
+        {
+            if (!strcmp("-u",output[i]))
+            {
+                push(pop()*(-1));
+            }
+            else
+            if (!strcmp("+u",output[i]))
+            {
+                push(pop());
+            }
+            else
+            if (!strcmp("+",output[i]))
+            {
+                push(pop()+pop());
+            }
+            else
+            if (!strcmp("-",output[i]))
+            {
+                a=pop();
+                push(pop()-a);
+            }
+            else
+            if (!strcmp("/",output[i]))
+            {
+                a=pop();
+                push(pop()/a);
+            }
+            else
+            if (!strcmp("*",output[i]))
+            {
+                push(pop()*pop());
+            }
+
+
+        }
+        else
+            die("nanato\n");
+
+
+
+    }
+
+
+
+	return pop();
+}
+
+
 
 
 int get_line(char line[])
@@ -205,7 +254,7 @@ int get_line(char line[])
 
 char isop(const char *var)
 {
-    return (!strcmp(var,"+") || !strcmp(var,"/") || !strcmp(var,"-") || !strcmp(var,"*") || !strcmp(var,"^"));
+    return (!strcmp(var,"-u") || !strcmp(var,"+") ||!strcmp(var,"/") || !strcmp(var,"-") || !strcmp(var,"*") || !strcmp(var,"^"));
 }
 
 
@@ -231,14 +280,26 @@ void do_it()
 
                 while (isdigit(line[i]))
                 {
-                    output[outsp] = line[i];
-                    outsp++;
-
-
+                    output[outsp][j] = line[i];
+                    j++;
                     i++;
                 }
-                output[outsp] = ' ';
+
+                if (line[i]=='.')
+                    {
+                        output[outsp][j++] = line[i++];
+                        while (isdigit(line[i]))
+                        {
+                            output[outsp][j++] = line[i++];
+                        }
+
+                    }
+
+
+
+                output[outsp][j] = '\0';
                 outsp++;
+
 
                 j = 0;
 
@@ -248,40 +309,36 @@ void do_it()
                 {
 
 
-                    while ( !isdigit(line[i]) && line[i]!='\0' && line[i]!='(' && line[i]!=')') //TODO: SAVED MESSAGES TELEGRAM and J limit
+                    while ( !isdigit(line[i]) && line[i]!='\0' && line[i]!='(' && line[i]!=')')
                     {
                         tempop[j] = line[i];
                         i++;
                         j++;
 
                     }
-                    tempop[j] = '\0';j = 0;
+
+                    tempop[j] = '\0';
+                    j=0;
 
 
 
 
                     if (isop(tempop))
                     {
-                        puts("\n--");
-                        puts(tempop);
-                        puts("\n--");
+                        if (i==1||(i>1 && line[i-2]=='('))
+                        {
+                            strcat(tempop,"u");
+
+                        }
+
 
 
 
                         while (sp > 0 && (opsPrecedence(opstack[sp-1]).pre > opsPrecedence(tempop).pre || (opsPrecedence(opstack[sp-1]).pre == opsPrecedence(tempop).pre && opsPrecedence(tempop).as == 0 )) && opstack[sp-1] != '(' )
                         {
-                            for (int _i = 0;opstack[sp-1][_i]!='\0';_i++)
-                            {
-                                output[outsp] = opstack[sp-1][_i];
-                                outsp++;
-                            }
-                            output[outsp] = ' ';
+                            strcpy(output[outsp],opstack[sp-1]);
                             outsp++;
-
-
-
                             sp--;
-
                         }
 
 
@@ -291,7 +348,6 @@ void do_it()
 
                     }
                     else{
-
 
                         continue;
                     }
@@ -316,16 +372,9 @@ void do_it()
                 {
                     while (opstack[sp-1][0] != '(')
                     {
-                        for (int _i = 0;opstack[sp-1][_i]!='\0';_i++)
-                        {
-                            output[outsp] = opstack[sp-1][_i];
-                            outsp++;
-                        }
-                        output[outsp] = ' ';
+
+                        strcpy(output[outsp],opstack[sp-1]);
                         outsp++;
-
-
-
 
                         sp--;
 
@@ -350,20 +399,12 @@ void do_it()
         while (sp>0)
         {
 
-            for (int _i = 0;opstack[sp-1][_i]!='\0';_i++)
-            {
-                output[outsp] = opstack[sp-1][_i];
-                outsp++;
-            }
-            output[outsp] = ' ';
+            strcpy(output[outsp],opstack[sp-1]);
             outsp++;
             sp--;
         }
-        puts("\n--");
-        output[outsp]='\0';
-        puts(output);
-        puts("\n--");
 
+        output[outsp][0]='\0';
         return;
 
     }
@@ -373,7 +414,7 @@ void do_it()
 void initStacks()
 {
         opstack = (char **) malloc(MAX_OP_STACK_SIZE);
-        output = (char *) malloc(MAX_OUTPUT_SIZE);
+        output = (char **) malloc(MAX_OUTPUT_SIZE);
         tempop = (char *) malloc(OPERATOR_MAX_LEN);
 
         for (int _i = 0;_i<=MAX_OP_STACK_SIZE;_i++)
@@ -381,7 +422,10 @@ void initStacks()
             opstack[_i] = (char *) malloc(OPERATOR_MAX_LEN);
         }
 
-
+        for (int _i = 0;_i<=MAX_OUTPUT_SIZE;_i++)
+        {
+            output[_i] = (char *) malloc(MAX_OUTPUT_LENGTH);
+        }
 
 }
 
@@ -398,7 +442,18 @@ int main(void)
         do_it();
 
 
-        printf("%s\n", rpn(output));
+        printf("%g", rpn(output));
+        /*
+        int _i = 0;
+
+        for ( _i = 0;output[_i][0]!='\0';_i++)
+        {
+            printf("%s ", output[_i]);
+
+
+        }*/
+        puts("\n");
+
 
         outsp=0;
 
