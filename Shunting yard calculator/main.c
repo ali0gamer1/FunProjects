@@ -58,6 +58,7 @@ void initOpsStruct()
     _opsPrecedence[10].pre=6; // ~
     _opsPrecedence[11].pre=6; // unary minus (-u)
     _opsPrecedence[12].pre=6; // unary minus (+u)
+    _opsPrecedence[13].pre=6;
 
     // Associativity (IDs are the same as presedence)
     _opsPrecedence[0].as=0;
@@ -73,10 +74,16 @@ void initOpsStruct()
     _opsPrecedence[10].as=0;
     _opsPrecedence[11].as=1;
     _opsPrecedence[12].as=1;
+    _opsPrecedence[13].pre=1;
 }
 
 struct operators opsPrecedence(const char * operator)
 {
+    if (!strcmp(operator,"testu"))
+    {
+        return _opsPrecedence[13];
+
+    } else
     if (!strcmp(operator,"+u"))
     {
         return _opsPrecedence[12];
@@ -164,13 +171,7 @@ double rpn()
 	double a;
 	int i, j;
 	char flag;
-    for ( int _i = 0;output[_i][0]!='\0';_i++)
-    {
-            printf("%s ", output[_i]);
 
-
-    }
-        puts("\ndasad");
 
 
 	for ( i = 0;output[i][0]!='\0';i++)
@@ -195,7 +196,14 @@ double rpn()
         }
         else if(isop(output[i]))
         {
+            puts(output[i]);
+            if (!strcmp("testu",output[i]))
+            {
 
+                a=pop();
+                push(a*10);
+            }
+            else
             if (!strcmp("-u",output[i]))
             {
                 a=pop();
@@ -209,7 +217,6 @@ double rpn()
             else
             if (!strcmp("+",output[i]))
             {
-                printf("\np%sp\n",output[i]);
                 push(pop()+pop());
             }
             else
@@ -268,7 +275,7 @@ int get_line(char line[])
 
 char isop(const char *var)
 {
-    return (!strcmp(var,"-u") || !strcmp(var,"+") ||!strcmp(var,"/") || !strcmp(var,"-") || !strcmp(var,"*") || !strcmp(var,"^"));
+    return (!strcmp(var,"test") ||!strcmp(var,"testu")|| !strcmp(var,"+") || !strcmp(var,"+u")  ||!strcmp(var,"/") || !strcmp(var,"-") || !strcmp(var,"-u") || !strcmp(var,"*") || !strcmp(var,"^"));
 }
 
 
@@ -321,6 +328,7 @@ void do_it()
             else
             if (line[i]!='(' && line[i]!=')')
                 {
+                    int _test = i;
 
 
                     while ( !isdigit(line[i]) && line[i]!='\0' && line[i]!='(' && line[i]!=')')
@@ -337,9 +345,11 @@ void do_it()
 
                     if (isop(tempop))
                     {
-                        if (i==1||(i>1 && line[i-2]=='('))
+                        if (_test==0||(_test>1 && line[_test-1]=='('))
                         {
                             strcat(tempop,"u");
+
+
 
                         }
 
@@ -445,7 +455,7 @@ int main(void)
     while(1){
         do_it();
 
-        printf("%g", rpn());
+        printf("\n%g", rpn());
 
         puts("\n");
 
