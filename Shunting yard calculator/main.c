@@ -315,7 +315,7 @@ void do_it()
                 outsp++;
 
 
-                j = 0;
+
 
             }
             else
@@ -332,8 +332,6 @@ void do_it()
                     }
 
                     tempop[j] = '\0';
-                    j=0;
-
 
 
 
@@ -344,8 +342,6 @@ void do_it()
                             strcat(tempop,"u");
 
                         }
-
-
 
 
                         while (sp > 0 && (opsPrecedence(opstack[sp-1]).pre > opsPrecedence(tempop).pre || (opsPrecedence(opstack[sp-1]).pre == opsPrecedence(tempop).pre && opsPrecedence(tempop).as == 0 )) && opstack[sp-1] != '(' )
@@ -367,9 +363,6 @@ void do_it()
                     }
 
 
-
-
-                    j = 0;
                 }
                 else
                 if (line[i] == '(')
@@ -379,7 +372,7 @@ void do_it()
                    opstack[sp][j] = '\0';
                    sp++;
                    i++;
-                   j=0;
+
                 }
                 else
                 if (line[i] == ')')
@@ -449,28 +442,12 @@ int main(void)
     initStacks();
     initOpsStruct();
 
-
-
-
     while(1){
         do_it();
 
-        int _i = 0;
-
-
-
         printf("%g", rpn());
-        /*
-        int _i = 0;
 
-        for ( _i = 0;output[_i][0]!='\0';_i++)
-        {
-            printf("%s ", output[_i]);
-
-
-        }*/
         puts("\n");
-
 
         outsp=0;
 
