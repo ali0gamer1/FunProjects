@@ -362,7 +362,13 @@ void do_it()
                     tempop[j] = '\0';
 
 
-
+                    if (strlen(tempop)>1 && tempop[0] == ',')
+                    {
+                        strncpy(tempop,(tempop+1),1);
+                        puts(tempop);
+                        strncpy((tempop+1),"u",1);
+                        puts(tempop);
+                    }
 
 
                     if (isop(tempop))
@@ -371,6 +377,9 @@ void do_it()
                         {
                             strcat(tempop,"u");
                         }
+
+
+
 
 
                         while (sp > 0 && (opsPrecedence(opstack[sp-1]).pre > opsPrecedence(tempop).pre || (opsPrecedence(opstack[sp-1]).pre == opsPrecedence(tempop).pre && opsPrecedence(tempop).as == 0 )) && opstack[sp-1] != '(' )
@@ -386,7 +395,6 @@ void do_it()
 
                     }
                     else
-                    if(strcmp(tempop,","))
                         die("Unknown operator");
 
 
