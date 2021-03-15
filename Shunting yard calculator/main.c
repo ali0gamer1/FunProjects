@@ -161,11 +161,12 @@ char **opstack;
 unsigned int sp;
 
 
+char *tempfunc;
 char **output;
 unsigned int outsp;
 
 
-
+char isfunc(const char *var);
 double rpn()
 {
 	double a;
@@ -194,14 +195,13 @@ double rpn()
             push(atof(output[i]));
 
         }
-        else if(isop(output[i]))
+        else if(isop(output[i]) || isfunc(output[i]))
         {
-            puts(output[i]);
-            if (!strcmp("testu",output[i]))
+            if (!strcmp("pow",output[i]))
             {
 
                 a=pop();
-                push(a*10);
+                push(pow(pop(),a));
             }
             else
             if (!strcmp("-u",output[i]))
@@ -275,10 +275,20 @@ int get_line(char line[])
 
 char isop(const char *var)
 {
-    return (!strcmp(var,"test") ||!strcmp(var,"testu")|| !strcmp(var,"+") || !strcmp(var,"+u")  ||!strcmp(var,"/") || !strcmp(var,"-") || !strcmp(var,"-u") || !strcmp(var,"*") || !strcmp(var,"^"));
+    return (!strcmp(var,",") ||!strcmp(var,"testu")|| !strcmp(var,"+") || !strcmp(var,"+u")  ||!strcmp(var,"/") || !strcmp(var,"-") || !strcmp(var,"-u") || !strcmp(var,"*") || !strcmp(var,"^"));
 }
 
 
+char isfunc(const char *var)
+{
+    return (!strcmp(var,"pow"));
+}
+
+
+char isop_char(int var)
+{
+    return (var=='+'||var == ',' || var=='/' || var=='-' || var=='*' || var=='^');
+}
 
 void do_it()
 {
@@ -320,37 +330,46 @@ void do_it()
 
                 output[outsp][j] = '\0';
                 outsp++;
-
-
-
-
             }
             else
             if (line[i]!='(' && line[i]!=')')
                 {
-                    int _test = i;
+                    int _test = i, _test2 = i;
+
+                    while (!isdigit(line[i]) && line[i]!='\0' && line[i]!='(' && line[i]!=')' && !isop_char(line[i]))
+                    {
+                        tempfunc[j] = line[i];
+                        i++;
+                        j++;
+                    }
+                    tempfunc[j] = '\0';
+
+                    if (isfunc(tempfunc))
+                    {
+                        strcpy(opstack[sp],tempfunc);
+                        sp++;
+                        continue;
+                    }
 
 
-                    while ( !isdigit(line[i]) && line[i]!='\0' && line[i]!='(' && line[i]!=')')
+                    while (!isdigit(line[i]) && line[i]!='\0' && line[i]!='(' && line[i]!=')' && isop_char(line[i]))
                     {
                         tempop[j] = line[i];
                         i++;
                         j++;
 
                     }
-
                     tempop[j] = '\0';
+
+
 
 
 
                     if (isop(tempop))
                     {
-                        if (_test==0||(_test>1 && line[_test-1]=='('))
+                        if (_test==0||(_test>=1 && line[_test-1]=='('))
                         {
                             strcat(tempop,"u");
-
-
-
                         }
 
 
@@ -363,14 +382,12 @@ void do_it()
 
 
                     strcpy(opstack[sp],tempop);
-
                     sp++;
 
                     }
-                    else{
-
-                        continue;
-                    }
+                    else
+                    if(strcmp(tempop,","))
+                        die("Unknown operator");
 
 
                 }
@@ -407,6 +424,14 @@ void do_it()
                         sp--;
                     }
 
+                    if (isfunc(opstack[sp-1]))
+                    {
+                        strcpy(output[outsp],opstack[sp-1]);
+                        outsp++;
+                        sp--;
+                    }
+
+
                     i++;
                 }
 
@@ -421,6 +446,9 @@ void do_it()
             sp--;
         }
 
+
+
+
         output[outsp][0]='\0';
         return;
 
@@ -433,6 +461,8 @@ void initStacks()
         opstack = (char **) malloc(MAX_OP_STACK_SIZE);
         output = (char **) malloc(MAX_OUTPUT_SIZE);
         tempop = (char *) malloc(OPERATOR_MAX_LEN);
+        tempfunc = (char *) malloc(OPERATOR_MAX_LEN);
+
 
         for (int _i = 0;_i<=MAX_OP_STACK_SIZE;_i++)
         {
@@ -455,9 +485,8 @@ int main(void)
     while(1){
         do_it();
 
-        printf("\n%g", rpn());
+        printf("\n%g\n", rpn());
 
-        puts("\n");
 
         outsp=0;
 
