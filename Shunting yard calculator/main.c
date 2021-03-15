@@ -74,7 +74,7 @@ void initOpsStruct()
     _opsPrecedence[10].as=0;
     _opsPrecedence[11].as=1;
     _opsPrecedence[12].as=1;
-    _opsPrecedence[13].pre=1;
+    _opsPrecedence[13].as=1;
 }
 
 struct operators opsPrecedence(const char * operator)
