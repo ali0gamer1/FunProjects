@@ -143,6 +143,11 @@ input, select, textarea {
 		text-decoration: none;
 	}
 
+	#moreinfo:hover
+	{
+		color: wheat;	
+	}
+
 	h2 {
 		font-size: 1.5em;
 	}
@@ -2068,7 +2073,8 @@ input, select, textarea {
 		position: relative;
 		background: #ffffff;
 		border-bottom: solid 1px #ccc;
-		padding: 5em 0 4em 0;
+		padding: 2.5em 0 4em 0;
+		padding-top: 2.5em!important;
 		text-align: center;
 	}
 
@@ -2180,7 +2186,7 @@ input, select, textarea {
 		text-align: center;
 		position: relative;
 		padding: 8em 0;
-		margin: 4em 0 0 0;
+		margin: 2em 0 0 0;
 	}
 
 		#banner header {
